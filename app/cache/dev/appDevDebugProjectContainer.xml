@@ -2512,7 +2512,6 @@
         <service class="Doctrine\ORM\Configuration" public="false">
           <call method="setEntityNamespaces">
             <argument type="collection">
-              <argument key="Gedmo">Gedmo\Translatable\Entity</argument>
               <argument key="AcmeProfileBundle">Acme\ProfileBundle\Entity</argument>
             </argument>
           </call>
@@ -2533,19 +2532,6 @@
                     <service class="Doctrine\ORM\Mapping\Driver\AnnotationDriver" public="false">
                       <argument type="service" id="annotation_reader"/>
                       <argument type="collection">
-                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Translatable\Entity</argument>
-                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\ProfileBundle\Entity</argument>
-                      </argument>
-                    </service>
-                  </argument>
-                  <argument>Gedmo\Translatable\Entity</argument>
-                </call>
-                <call method="addDriver">
-                  <argument type="service">
-                    <service class="Doctrine\ORM\Mapping\Driver\AnnotationDriver" public="false">
-                      <argument type="service" id="annotation_reader"/>
-                      <argument type="collection">
-                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Translatable\Entity</argument>
                         <argument>C:\xampp\htdocs\Symfony2\src\Acme\ProfileBundle\Entity</argument>
                       </argument>
                     </service>
