@@ -1,0 +1,3 @@
+acme_alert_homepage:
+    path:     /zapisz
+    defaults: { _controller: AcmeAlertBundle:Default:index }

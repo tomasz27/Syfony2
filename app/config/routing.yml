@@ -1,3 +1,7 @@
+acme_alert:
+    resource: "@AcmeAlertBundle/Resources/config/routing.yml"
+    prefix:   /
+
 acme_profile:
     resource: "@AcmeProfileBundle/Resources/config/routing.yml"
     prefix:   /

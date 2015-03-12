@@ -18,6 +18,7 @@
       <parameter key="SensioFrameworkExtraBundle">Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle</parameter>
       <parameter key="AppBundle">AppBundle\AppBundle</parameter>
       <parameter key="AcmeProfileBundle">Acme\ProfileBundle\AcmeProfileBundle</parameter>
+      <parameter key="AcmeAlertBundle">Acme\AlertBundle\AcmeAlertBundle</parameter>
       <parameter key="DebugBundle">Symfony\Bundle\DebugBundle\DebugBundle</parameter>
       <parameter key="WebProfilerBundle">Symfony\Bundle\WebProfilerBundle\WebProfilerBundle</parameter>
       <parameter key="SensioDistributionBundle">Sensio\Bundle\DistributionBundle\SensioDistributionBundle</parameter>
@@ -655,6 +656,55 @@
     </parameter>
   </parameters>
   <services>
+    <service id="extension.listener" class="Acme\AlertBundle\Listener\DoctrineExtensionListener">
+      <tag name="kernel.event_listener" event="kernel.request" method="onLateKernelRequest" priority="-10"/>
+      <tag name="kernel.event_listener" event="kernel.request" method="onKernelRequest"/>
+      <call method="setContainer">
+        <argument type="service" id="service_container"/>
+      </call>
+    </service>
+    <service id="gedmo.listener.tree" class="Gedmo\Tree\TreeListener">
+      <tag name="doctrine.event_subscriber" connection="default"/>
+      <call method="setAnnotationReader">
+        <argument type="service" id="annotation_reader"/>
+      </call>
+    </service>
+    <service id="gedmo.listener.translatable" class="Gedmo\Translatable\TranslatableListener">
+      <tag name="doctrine.event_subscriber" connection="default"/>
+      <call method="setAnnotationReader">
+        <argument type="service" id="annotation_reader"/>
+      </call>
+      <call method="setDefaultLocale">
+        <argument>en</argument>
+      </call>
+      <call method="setTranslationFallback">
+        <argument>false</argument>
+      </call>
+    </service>
+    <service id="gedmo.listener.timestampable" class="Gedmo\Timestampable\TimestampableListener">
+      <tag name="doctrine.event_subscriber" connection="default"/>
+      <call method="setAnnotationReader">
+        <argument type="service" id="annotation_reader"/>
+      </call>
+    </service>
+    <service id="gedmo.listener.sluggable" class="Gedmo\Sluggable\SluggableListener">
+      <tag name="doctrine.event_subscriber" connection="default"/>
+      <call method="setAnnotationReader">
+        <argument type="service" id="annotation_reader"/>
+      </call>
+    </service>
+    <service id="gedmo.listener.sortable" class="Gedmo\Sortable\SortableListener">
+      <tag name="doctrine.event_subscriber" connection="default"/>
+      <call method="setAnnotationReader">
+        <argument type="service" id="annotation_reader"/>
+      </call>
+    </service>
+    <service id="gedmo.listener.loggable" class="Gedmo\Loggable\LoggableListener">
+      <tag name="doctrine.event_subscriber" connection="default"/>
+      <call method="setAnnotationReader">
+        <argument type="service" id="annotation_reader"/>
+      </call>
+    </service>
     <service id="controller_name_converter" class="Symfony\Bundle\FrameworkBundle\Controller\ControllerNameParser" public="false">
       <tag name="monolog.logger" channel="request"/>
       <argument type="service" id="kernel"/>
@@ -1639,6 +1689,22 @@
       <argument type="service" id="debug.stopwatch"/>
       <argument type="service" id="monolog.logger.event" on-invalid="null"/>
       <call method="addListenerService">
+        <argument>kernel.request</argument>
+        <argument type="collection">
+          <argument>extension.listener</argument>
+          <argument>onLateKernelRequest</argument>
+        </argument>
+        <argument>-10</argument>
+      </call>
+      <call method="addListenerService">
+        <argument>kernel.request</argument>
+        <argument type="collection">
+          <argument>extension.listener</argument>
+          <argument>onKernelRequest</argument>
+        </argument>
+        <argument>0</argument>
+      </call>
+      <call method="addListenerService">
         <argument>kernel.controller</argument>
         <argument type="collection">
           <argument>data_collector.router</argument>
@@ -2465,9 +2531,29 @@
       <argument type="service">
         <service class="Symfony\Bridge\Doctrine\ContainerAwareEventManager" public="false">
           <argument type="service" id="service_container"/>
+          <call method="addEventSubscriber">
+            <argument type="service" id="gedmo.listener.tree"/>
+          </call>
+          <call method="addEventSubscriber">
+            <argument type="service" id="gedmo.listener.sortable"/>
+          </call>
+          <call method="addEventSubscriber">
+            <argument type="service" id="gedmo.listener.translatable"/>
+          </call>
+          <call method="addEventSubscriber">
+            <argument type="service" id="gedmo.listener.sluggable"/>
+          </call>
+          <call method="addEventSubscriber">
+            <argument type="service" id="gedmo.listener.timestampable"/>
+          </call>
+          <call method="addEventSubscriber">
+            <argument type="service" id="gedmo.listener.loggable"/>
+          </call>
         </service>
       </argument>
-      <argument type="collection"/>
+      <argument type="collection">
+        <argument key="enum">string</argument>
+      </argument>
       <factory service="doctrine.dbal.connection_factory" method="createConnection"/>
     </service>
     <service id="form.type_guesser.doctrine" class="Symfony\Bridge\Doctrine\Form\DoctrineOrmTypeGuesser">
@@ -2512,7 +2598,9 @@
         <service class="Doctrine\ORM\Configuration" public="false">
           <call method="setEntityNamespaces">
             <argument type="collection">
+              <argument key="Gedmo">Gedmo\Tree\Entity</argument>
               <argument key="AcmeProfileBundle">Acme\ProfileBundle\Entity</argument>
+              <argument key="AcmeAlertBundle">Acme\AlertBundle\Entity</argument>
             </argument>
           </call>
           <call method="setMetadataCacheImpl">
@@ -2532,11 +2620,75 @@
                     <service class="Doctrine\ORM\Mapping\Driver\AnnotationDriver" public="false">
                       <argument type="service" id="annotation_reader"/>
                       <argument type="collection">
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Translatable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Loggable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Tree\Entity</argument>
                         <argument>C:\xampp\htdocs\Symfony2\src\Acme\ProfileBundle\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\AlertBundle\Entity</argument>
+                      </argument>
+                    </service>
+                  </argument>
+                  <argument>Gedmo\Translatable\Entity</argument>
+                </call>
+                <call method="addDriver">
+                  <argument type="service">
+                    <service class="Doctrine\ORM\Mapping\Driver\AnnotationDriver" public="false">
+                      <argument type="service" id="annotation_reader"/>
+                      <argument type="collection">
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Translatable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Loggable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Tree\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\ProfileBundle\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\AlertBundle\Entity</argument>
+                      </argument>
+                    </service>
+                  </argument>
+                  <argument>Gedmo\Loggable\Entity</argument>
+                </call>
+                <call method="addDriver">
+                  <argument type="service">
+                    <service class="Doctrine\ORM\Mapping\Driver\AnnotationDriver" public="false">
+                      <argument type="service" id="annotation_reader"/>
+                      <argument type="collection">
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Translatable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Loggable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Tree\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\ProfileBundle\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\AlertBundle\Entity</argument>
+                      </argument>
+                    </service>
+                  </argument>
+                  <argument>Gedmo\Tree\Entity</argument>
+                </call>
+                <call method="addDriver">
+                  <argument type="service">
+                    <service class="Doctrine\ORM\Mapping\Driver\AnnotationDriver" public="false">
+                      <argument type="service" id="annotation_reader"/>
+                      <argument type="collection">
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Translatable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Loggable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Tree\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\ProfileBundle\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\AlertBundle\Entity</argument>
                       </argument>
                     </service>
                   </argument>
                   <argument>Acme\ProfileBundle\Entity</argument>
+                </call>
+                <call method="addDriver">
+                  <argument type="service">
+                    <service class="Doctrine\ORM\Mapping\Driver\AnnotationDriver" public="false">
+                      <argument type="service" id="annotation_reader"/>
+                      <argument type="collection">
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Translatable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Loggable\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\vendor\gedmo\doctrine-extensions\lib\Gedmo\Tree\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\ProfileBundle\Entity</argument>
+                        <argument>C:\xampp\htdocs\Symfony2\src\Acme\AlertBundle\Entity</argument>
+                      </argument>
+                    </service>
+                  </argument>
+                  <argument>Acme\AlertBundle\Entity</argument>
                 </call>
               </service>
             </argument>
@@ -2975,6 +3127,10 @@
       <call method="addPath">
         <argument>C:\xampp\htdocs\Symfony2\src\Acme\ProfileBundle/Resources/views</argument>
         <argument>AcmeProfile</argument>
+      </call>
+      <call method="addPath">
+        <argument>C:\xampp\htdocs\Symfony2\src\Acme\AlertBundle/Resources/views</argument>
+        <argument>AcmeAlert</argument>
       </call>
       <call method="addPath">
         <argument>C:\xampp\htdocs\Symfony2\vendor\symfony\symfony\src\Symfony\Bundle\DebugBundle/Resources/views</argument>

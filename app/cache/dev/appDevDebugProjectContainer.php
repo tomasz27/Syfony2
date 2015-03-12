@@ -73,6 +73,7 @@ class appDevDebugProjectContainer extends Container
             'doctrine_cache.providers.doctrine.orm.default_metadata_cache' => 'getDoctrineCache_Providers_Doctrine_Orm_DefaultMetadataCacheService',
             'doctrine_cache.providers.doctrine.orm.default_query_cache' => 'getDoctrineCache_Providers_Doctrine_Orm_DefaultQueryCacheService',
             'doctrine_cache.providers.doctrine.orm.default_result_cache' => 'getDoctrineCache_Providers_Doctrine_Orm_DefaultResultCacheService',
+            'extension.listener' => 'getExtension_ListenerService',
             'file_locator' => 'getFileLocatorService',
             'filesystem' => 'getFilesystemService',
             'form.csrf_provider' => 'getForm_CsrfProviderService',
@@ -124,6 +125,12 @@ class appDevDebugProjectContainer extends Container
             'fragment.renderer.hinclude' => 'getFragment_Renderer_HincludeService',
             'fragment.renderer.inline' => 'getFragment_Renderer_InlineService',
             'fragment.renderer.ssi' => 'getFragment_Renderer_SsiService',
+            'gedmo.listener.loggable' => 'getGedmo_Listener_LoggableService',
+            'gedmo.listener.sluggable' => 'getGedmo_Listener_SluggableService',
+            'gedmo.listener.sortable' => 'getGedmo_Listener_SortableService',
+            'gedmo.listener.timestampable' => 'getGedmo_Listener_TimestampableService',
+            'gedmo.listener.translatable' => 'getGedmo_Listener_TranslatableService',
+            'gedmo.listener.tree' => 'getGedmo_Listener_TreeService',
             'http_kernel' => 'getHttpKernelService',
             'kernel' => 'getKernelService',
             'locale_listener' => 'getLocaleListenerService',
@@ -518,6 +525,8 @@ class appDevDebugProjectContainer extends Container
     {
         $this->services['debug.event_dispatcher'] = $instance = new \Symfony\Component\HttpKernel\Debug\TraceableEventDispatcher(new \Symfony\Component\EventDispatcher\ContainerAwareEventDispatcher($this), $this->get('debug.stopwatch'), $this->get('monolog.logger.event', ContainerInterface::NULL_ON_INVALID_REFERENCE));
 
+        $instance->addListenerService('kernel.request', array(0 => 'extension.listener', 1 => 'onLateKernelRequest'), -10);
+        $instance->addListenerService('kernel.request', array(0 => 'extension.listener', 1 => 'onKernelRequest'), 0);
         $instance->addListenerService('kernel.controller', array(0 => 'data_collector.router', 1 => 'onKernelController'), 0);
         $instance->addListenerService('kernel.request', array(0 => 'assetic.request_listener', 1 => 'onKernelRequest'), 0);
         $instance->addSubscriberService('response_listener', 'Symfony\\Component\\HttpKernel\\EventListener\\ResponseListener');
@@ -622,7 +631,15 @@ class appDevDebugProjectContainer extends Container
         $b = new \Doctrine\DBAL\Configuration();
         $b->setSQLLogger($a);
 
-        return $this->services['doctrine.dbal.default_connection'] = $this->get('doctrine.dbal.connection_factory')->createConnection(array('driver' => 'pdo_mysql', 'host' => '127.0.0.1', 'port' => NULL, 'dbname' => 'symfony', 'user' => 'root', 'password' => NULL, 'charset' => 'UTF8', 'driverOptions' => array()), $b, new \Symfony\Bridge\Doctrine\ContainerAwareEventManager($this), array());
+        $c = new \Symfony\Bridge\Doctrine\ContainerAwareEventManager($this);
+        $c->addEventSubscriber($this->get('gedmo.listener.tree'));
+        $c->addEventSubscriber($this->get('gedmo.listener.sortable'));
+        $c->addEventSubscriber($this->get('gedmo.listener.translatable'));
+        $c->addEventSubscriber($this->get('gedmo.listener.sluggable'));
+        $c->addEventSubscriber($this->get('gedmo.listener.timestampable'));
+        $c->addEventSubscriber($this->get('gedmo.listener.loggable'));
+
+        return $this->services['doctrine.dbal.default_connection'] = $this->get('doctrine.dbal.connection_factory')->createConnection(array('driver' => 'pdo_mysql', 'host' => '127.0.0.1', 'port' => NULL, 'dbname' => 'symfony', 'user' => 'root', 'password' => NULL, 'charset' => 'UTF8', 'driverOptions' => array()), $b, $c, array('enum' => 'string'));
     }
 
     /**
@@ -648,24 +665,32 @@ class appDevDebugProjectContainer extends Container
      */
     protected function getDoctrine_Orm_DefaultEntityManagerService()
     {
-        $a = new \Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain();
-        $a->addDriver(new \Doctrine\ORM\Mapping\Driver\AnnotationDriver($this->get('annotation_reader'), array(0 => ($this->targetDirs[3].'\\src\\Acme\\ProfileBundle\\Entity'))), 'Acme\\ProfileBundle\\Entity');
+        $a = $this->get('annotation_reader');
 
-        $b = new \Doctrine\ORM\Configuration();
-        $b->setEntityNamespaces(array('AcmeProfileBundle' => 'Acme\\ProfileBundle\\Entity'));
-        $b->setMetadataCacheImpl($this->get('doctrine_cache.providers.doctrine.orm.default_metadata_cache'));
-        $b->setQueryCacheImpl($this->get('doctrine_cache.providers.doctrine.orm.default_query_cache'));
-        $b->setResultCacheImpl($this->get('doctrine_cache.providers.doctrine.orm.default_result_cache'));
-        $b->setMetadataDriverImpl($a);
-        $b->setProxyDir((__DIR__.'/doctrine/orm/Proxies'));
-        $b->setProxyNamespace('Proxies');
-        $b->setAutoGenerateProxyClasses(true);
-        $b->setClassMetadataFactoryName('Doctrine\\ORM\\Mapping\\ClassMetadataFactory');
-        $b->setDefaultRepositoryClassName('Doctrine\\ORM\\EntityRepository');
-        $b->setNamingStrategy(new \Doctrine\ORM\Mapping\DefaultNamingStrategy());
-        $b->setEntityListenerResolver($this->get('doctrine.orm.default_entity_listener_resolver'));
+        $b = new \Doctrine\ORM\Mapping\Driver\AnnotationDriver($a, array(0 => ($this->targetDirs[3].'\\vendor\\gedmo\\doctrine-extensions\\lib\\Gedmo\\Translatable\\Entity'), 1 => ($this->targetDirs[3].'\\vendor\\gedmo\\doctrine-extensions\\lib\\Gedmo\\Loggable\\Entity'), 2 => ($this->targetDirs[3].'\\vendor\\gedmo\\doctrine-extensions\\lib\\Gedmo\\Tree\\Entity'), 3 => ($this->targetDirs[3].'\\src\\Acme\\ProfileBundle\\Entity'), 4 => ($this->targetDirs[3].'\\src\\Acme\\AlertBundle\\Entity')));
 
-        $this->services['doctrine.orm.default_entity_manager'] = $instance = \Doctrine\ORM\EntityManager::create($this->get('doctrine.dbal.default_connection'), $b);
+        $c = new \Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain();
+        $c->addDriver($b, 'Gedmo\\Translatable\\Entity');
+        $c->addDriver($b, 'Gedmo\\Loggable\\Entity');
+        $c->addDriver($b, 'Gedmo\\Tree\\Entity');
+        $c->addDriver($b, 'Acme\\ProfileBundle\\Entity');
+        $c->addDriver($b, 'Acme\\AlertBundle\\Entity');
+
+        $d = new \Doctrine\ORM\Configuration();
+        $d->setEntityNamespaces(array('Gedmo' => 'Gedmo\\Tree\\Entity', 'AcmeProfileBundle' => 'Acme\\ProfileBundle\\Entity', 'AcmeAlertBundle' => 'Acme\\AlertBundle\\Entity'));
+        $d->setMetadataCacheImpl($this->get('doctrine_cache.providers.doctrine.orm.default_metadata_cache'));
+        $d->setQueryCacheImpl($this->get('doctrine_cache.providers.doctrine.orm.default_query_cache'));
+        $d->setResultCacheImpl($this->get('doctrine_cache.providers.doctrine.orm.default_result_cache'));
+        $d->setMetadataDriverImpl($c);
+        $d->setProxyDir((__DIR__.'/doctrine/orm/Proxies'));
+        $d->setProxyNamespace('Proxies');
+        $d->setAutoGenerateProxyClasses(true);
+        $d->setClassMetadataFactoryName('Doctrine\\ORM\\Mapping\\ClassMetadataFactory');
+        $d->setDefaultRepositoryClassName('Doctrine\\ORM\\EntityRepository');
+        $d->setNamingStrategy(new \Doctrine\ORM\Mapping\DefaultNamingStrategy());
+        $d->setEntityListenerResolver($this->get('doctrine.orm.default_entity_listener_resolver'));
+
+        $this->services['doctrine.orm.default_entity_manager'] = $instance = \Doctrine\ORM\EntityManager::create($this->get('doctrine.dbal.default_connection'), $d);
 
         $this->get('doctrine.orm.default_manager_configurator')->configure($instance);
 
@@ -758,6 +783,23 @@ class appDevDebugProjectContainer extends Container
         $this->services['doctrine_cache.providers.doctrine.orm.default_result_cache'] = $instance = new \Doctrine\Common\Cache\ArrayCache();
 
         $instance->setNamespace('sf2orm_default_0b8d1ddfc5aedb95b8c1d2bb8c3f38108aee9f563a77e3323da052aec968fad6');
+
+        return $instance;
+    }
+
+    /**
+     * Gets the 'extension.listener' service.
+     *
+     * This service is shared.
+     * This method always returns the same instance of the service.
+     *
+     * @return \Acme\AlertBundle\Listener\DoctrineExtensionListener A Acme\AlertBundle\Listener\DoctrineExtensionListener instance.
+     */
+    protected function getExtension_ListenerService()
+    {
+        $this->services['extension.listener'] = $instance = new \Acme\AlertBundle\Listener\DoctrineExtensionListener();
+
+        $instance->setContainer($this);
 
         return $instance;
     }
@@ -1444,6 +1486,110 @@ class appDevDebugProjectContainer extends Container
         $this->services['fragment.renderer.ssi'] = $instance = new \Symfony\Component\HttpKernel\Fragment\SsiFragmentRenderer(NULL, $this->get('fragment.renderer.inline'), $this->get('uri_signer'));
 
         $instance->setFragmentPath('/_fragment');
+
+        return $instance;
+    }
+
+    /**
+     * Gets the 'gedmo.listener.loggable' service.
+     *
+     * This service is shared.
+     * This method always returns the same instance of the service.
+     *
+     * @return \Gedmo\Loggable\LoggableListener A Gedmo\Loggable\LoggableListener instance.
+     */
+    protected function getGedmo_Listener_LoggableService()
+    {
+        $this->services['gedmo.listener.loggable'] = $instance = new \Gedmo\Loggable\LoggableListener();
+
+        $instance->setAnnotationReader($this->get('annotation_reader'));
+
+        return $instance;
+    }
+
+    /**
+     * Gets the 'gedmo.listener.sluggable' service.
+     *
+     * This service is shared.
+     * This method always returns the same instance of the service.
+     *
+     * @return \Gedmo\Sluggable\SluggableListener A Gedmo\Sluggable\SluggableListener instance.
+     */
+    protected function getGedmo_Listener_SluggableService()
+    {
+        $this->services['gedmo.listener.sluggable'] = $instance = new \Gedmo\Sluggable\SluggableListener();
+
+        $instance->setAnnotationReader($this->get('annotation_reader'));
+
+        return $instance;
+    }
+
+    /**
+     * Gets the 'gedmo.listener.sortable' service.
+     *
+     * This service is shared.
+     * This method always returns the same instance of the service.
+     *
+     * @return \Gedmo\Sortable\SortableListener A Gedmo\Sortable\SortableListener instance.
+     */
+    protected function getGedmo_Listener_SortableService()
+    {
+        $this->services['gedmo.listener.sortable'] = $instance = new \Gedmo\Sortable\SortableListener();
+
+        $instance->setAnnotationReader($this->get('annotation_reader'));
+
+        return $instance;
+    }
+
+    /**
+     * Gets the 'gedmo.listener.timestampable' service.
+     *
+     * This service is shared.
+     * This method always returns the same instance of the service.
+     *
+     * @return \Gedmo\Timestampable\TimestampableListener A Gedmo\Timestampable\TimestampableListener instance.
+     */
+    protected function getGedmo_Listener_TimestampableService()
+    {
+        $this->services['gedmo.listener.timestampable'] = $instance = new \Gedmo\Timestampable\TimestampableListener();
+
+        $instance->setAnnotationReader($this->get('annotation_reader'));
+
+        return $instance;
+    }
+
+    /**
+     * Gets the 'gedmo.listener.translatable' service.
+     *
+     * This service is shared.
+     * This method always returns the same instance of the service.
+     *
+     * @return \Gedmo\Translatable\TranslatableListener A Gedmo\Translatable\TranslatableListener instance.
+     */
+    protected function getGedmo_Listener_TranslatableService()
+    {
+        $this->services['gedmo.listener.translatable'] = $instance = new \Gedmo\Translatable\TranslatableListener();
+
+        $instance->setAnnotationReader($this->get('annotation_reader'));
+        $instance->setDefaultLocale('en');
+        $instance->setTranslationFallback(false);
+
+        return $instance;
+    }
+
+    /**
+     * Gets the 'gedmo.listener.tree' service.
+     *
+     * This service is shared.
+     * This method always returns the same instance of the service.
+     *
+     * @return \Gedmo\Tree\TreeListener A Gedmo\Tree\TreeListener instance.
+     */
+    protected function getGedmo_Listener_TreeService()
+    {
+        $this->services['gedmo.listener.tree'] = $instance = new \Gedmo\Tree\TreeListener();
+
+        $instance->setAnnotationReader($this->get('annotation_reader'));
 
         return $instance;
     }
@@ -3214,6 +3360,7 @@ class appDevDebugProjectContainer extends Container
         $instance->addPath(($this->targetDirs[3].'\\vendor\\symfony\\swiftmailer-bundle/Resources/views'), 'Swiftmailer');
         $instance->addPath(($this->targetDirs[3].'\\vendor\\doctrine\\doctrine-bundle/Resources/views'), 'Doctrine');
         $instance->addPath(($this->targetDirs[3].'\\src\\Acme\\ProfileBundle/Resources/views'), 'AcmeProfile');
+        $instance->addPath(($this->targetDirs[3].'\\src\\Acme\\AlertBundle/Resources/views'), 'AcmeAlert');
         $instance->addPath(($this->targetDirs[3].'\\vendor\\symfony\\symfony\\src\\Symfony\\Bundle\\DebugBundle/Resources/views'), 'Debug');
         $instance->addPath(($this->targetDirs[3].'\\vendor\\symfony\\symfony\\src\\Symfony\\Bundle\\WebProfilerBundle/Resources/views'), 'WebProfiler');
         $instance->addPath(($this->targetDirs[3].'\\vendor\\sensio\\distribution-bundle\\Sensio\\Bundle\\DistributionBundle/Resources/views'), 'SensioDistribution');
@@ -3705,6 +3852,7 @@ class appDevDebugProjectContainer extends Container
                 'SensioFrameworkExtraBundle' => 'Sensio\\Bundle\\FrameworkExtraBundle\\SensioFrameworkExtraBundle',
                 'AppBundle' => 'AppBundle\\AppBundle',
                 'AcmeProfileBundle' => 'Acme\\ProfileBundle\\AcmeProfileBundle',
+                'AcmeAlertBundle' => 'Acme\\AlertBundle\\AcmeAlertBundle',
                 'DebugBundle' => 'Symfony\\Bundle\\DebugBundle\\DebugBundle',
                 'WebProfilerBundle' => 'Symfony\\Bundle\\WebProfilerBundle\\WebProfilerBundle',
                 'SensioDistributionBundle' => 'Sensio\\Bundle\\DistributionBundle\\SensioDistributionBundle',
