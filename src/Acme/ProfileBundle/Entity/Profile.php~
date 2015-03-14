@@ -2,6 +2,7 @@
  namespace Acme\ProfileBundle\Entity;
 
  use Doctrine\ORM\Mapping as ORM;
+ use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ORM\Entity
@@ -19,42 +20,39 @@ class Profile
     /**
      * @ORM\Column(type="string", length=50)
      */
-    protected $login;
-
-    /**
-     * @ORM\Column(type="string", length=100)
-     */
-    protected $password;
-
-    /**
-     * @ORM\Column(type="string", length=40)
-     */
-    protected $email;
+    protected $avatarPath;
 
     /**
      * @ORM\Column(type="integer")
      */
-    protected $groupId;
+    protected $ggNumber;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="boolean")
      */
-    protected $profileId;
+    protected $notofication;
 
     /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column(type="boolean")
      */
-    protected $firstName;
+    protected $notoficationEmail;
 
     /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column(type="boolean")
      */
-    protected $lastName;
+    protected $notoficationCommunicator;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @Gedmo\Timestampable(on="create")
+     * @ORM\Column(name="createdOn", type="datetime")
      */
-    protected $lastLogin;
+    private $createdOn;
+
+    /**
+     * @ORM\Column(name="updatedOn", type="datetime")
+     * @Gedmo\Timestampable(on="update")
+     */
+    private $updatedOn;
 
     /**
      * Get id
@@ -67,186 +65,163 @@ class Profile
     }
 
     /**
-     * Set login
+     * Set avatarPath
      *
-     * @param string $login
+     * @param string $avatarPath
      * @return Profile
      */
-    public function setLogin($login)
+    public function setAvatarPath($avatarPath)
     {
-        $this->login = $login;
+        $this->avatarPath = $avatarPath;
 
         return $this;
     }
 
     /**
-     * Get login
+     * Get avatarPath
      *
      * @return string 
      */
-    public function getLogin()
+    public function getAvatarPath()
     {
-        return $this->login;
+        return $this->avatarPath;
     }
 
     /**
-     * Set password
+     * Set ggNumber
      *
-     * @param string $password
+     * @param integer $ggNumber
      * @return Profile
      */
-    public function setPassword($password)
+    public function setGgNumber($ggNumber)
     {
-        $this->password = $password;
+        $this->ggNumber = $ggNumber;
 
         return $this;
     }
 
     /**
-     * Get password
-     *
-     * @return string 
-     */
-    public function getPassword()
-    {
-        return $this->password;
-    }
-
-    /**
-     * Set email
-     *
-     * @param string $email
-     * @return Profile
-     */
-    public function setEmail($email)
-    {
-        $this->email = $email;
-
-        return $this;
-    }
-
-    /**
-     * Get email
-     *
-     * @return string 
-     */
-    public function getEmail()
-    {
-        return $this->email;
-    }
-
-    /**
-     * Set groupId
-     *
-     * @param integer $groupId
-     * @return Profile
-     */
-    public function setGroupId($groupId)
-    {
-        $this->groupId = $groupId;
-
-        return $this;
-    }
-
-    /**
-     * Get groupId
+     * Get ggNumber
      *
      * @return integer 
      */
-    public function getGroupId()
+    public function getGgNumber()
     {
-        return $this->groupId;
+        return $this->ggNumber;
     }
 
     /**
-     * Set profileId
+     * Set notofication
      *
-     * @param integer $profileId
+     * @param boolean $notofication
      * @return Profile
      */
-    public function setProfileId($profileId)
+    public function setNotofication($notofication)
     {
-        $this->profileId = $profileId;
+        $this->notofication = $notofication;
 
         return $this;
     }
 
     /**
-     * Get profileId
+     * Get notofication
      *
-     * @return integer 
+     * @return boolean 
      */
-    public function getProfileId()
+    public function getNotofication()
     {
-        return $this->profileId;
+        return $this->notofication;
     }
 
     /**
-     * Set firstName
+     * Set notoficationEmail
      *
-     * @param string $firstName
+     * @param boolean $notoficationEmail
      * @return Profile
      */
-    public function setFirstName($firstName)
+    public function setNotoficationEmail($notoficationEmail)
     {
-        $this->firstName = $firstName;
+        $this->notoficationEmail = $notoficationEmail;
 
         return $this;
     }
 
     /**
-     * Get firstName
+     * Get notoficationEmail
      *
-     * @return string 
+     * @return boolean 
      */
-    public function getFirstName()
+    public function getNotoficationEmail()
     {
-        return $this->firstName;
+        return $this->notoficationEmail;
     }
 
     /**
-     * Set lastName
+     * Set notoficationCommunicator
      *
-     * @param string $lastName
+     * @param boolean $notoficationCommunicator
      * @return Profile
      */
-    public function setLastName($lastName)
+    public function setNotoficationCommunicator($notoficationCommunicator)
     {
-        $this->lastName = $lastName;
+        $this->notoficationCommunicator = $notoficationCommunicator;
 
         return $this;
     }
 
     /**
-     * Get lastName
+     * Get notoficationCommunicator
      *
-     * @return string 
+     * @return boolean 
      */
-    public function getLastName()
+    public function getNotoficationCommunicator()
     {
-        return $this->lastName;
+        return $this->notoficationCommunicator;
     }
 
     /**
-     * Set lastLogin
+     * Set createdOn
      *
-     * @param \DateTime $lastLogin
+     * @param \DateTime $createdOn
      * @return Profile
      */
-    public function setLastLogin($lastLogin)
+    public function setCreatedOn($createdOn)
     {
-        $this->lastLogin = $lastLogin;
+        $this->createdOn = $createdOn;
 
         return $this;
     }
 
     /**
-     * Get lastLogin
+     * Get createdOn
      *
      * @return \DateTime 
      */
-    public function getLastLogin()
+    public function getCreatedOn()
     {
-        return $this->lastLogin;
+        return $this->createdOn;
+    }
+
+    /**
+     * Set updatedOn
+     *
+     * @param \DateTime $updatedOn
+     * @return Profile
+     */
+    public function setUpdatedOn($updatedOn)
+    {
+        $this->updatedOn = $updatedOn;
+
+        return $this;
+    }
+
+    /**
+     * Get updatedOn
+     *
+     * @return \DateTime 
+     */
+    public function getUpdatedOn()
+    {
+        return $this->updatedOn;
     }
 }

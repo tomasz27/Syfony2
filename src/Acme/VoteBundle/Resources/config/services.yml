@@ -1,0 +1,4 @@
+services:
+#    acme_vote.example:
+#        class: Acme\VoteBundle\Example
+#        arguments: [@service_id, "plain_value", %parameter%]

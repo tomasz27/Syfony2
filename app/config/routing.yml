@@ -1,3 +1,15 @@
+acme_vote:
+    resource: "@AcmeVoteBundle/Resources/config/routing.yml"
+    prefix:   /
+
+acme_tag:
+    resource: "@AcmeTagBundle/Resources/config/routing.yml"
+    prefix:   /
+
+acme_user:
+    resource: "@AcmeUserBundle/Resources/config/routing.yml"
+    prefix:   /
+
 acme_alert:
     resource: "@AcmeAlertBundle/Resources/config/routing.yml"
     prefix:   /
@@ -5,6 +17,9 @@ acme_alert:
 acme_profile:
     resource: "@AcmeProfileBundle/Resources/config/routing.yml"
     prefix:   /
+
+fos_user:
+    resource: "@FOSUserBundle/Resources/config/routing/all.xml"
 
 app:
     resource: @AppBundle/Controller/

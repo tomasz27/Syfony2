@@ -4,6 +4,8 @@ parameters:
 #    parameter_name: value
 
 services:
-#    service_name:
-#        class: AppBundle\Directory\ClassName
-#        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
+services:
+    acme_user.registration.form.type:
+        class: Acme\UserBundle\Form\Type\RegistrationFormType
+        tags:
+            - { name: form.type, alias: acme_user_registration }

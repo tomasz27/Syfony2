@@ -86,6 +86,7 @@ class Alert
 
     /**
      * @ORM\Column(type="datetime")
+     *  @Gedmo\Timestampable(on="update")
      */
     private $deletedOn;
 
@@ -397,5 +398,28 @@ class Alert
     public function getUpdated()
     {
         return $this->updated;
+    }
+
+    /**
+     * Set deletedOn
+     *
+     * @param \DateTime $deletedOn
+     * @return Alert
+     */
+    public function setDeletedOn($deletedOn)
+    {
+        $this->deletedOn = $deletedOn;
+
+        return $this;
+    }
+
+    /**
+     * Get deletedOn
+     *
+     * @return \DateTime 
+     */
+    public function getDeletedOn()
+    {
+        return $this->deletedOn;
     }
 }

@@ -1,0 +1,3 @@
+acme_tag_homepage:
+    path:     /tag
+    defaults: { _controller: AcmeTagBundle:Default:index }
